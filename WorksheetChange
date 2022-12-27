@@ -1,0 +1,5 @@
+Private Sub Worksheet_Change(ByVal Target As Range)
+    LogWtRtChanges Target
+    UpdateCleaningSchedule Target
+    AlertToChangeDate Target
+End Sub
