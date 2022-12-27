@@ -1,0 +1,234 @@
+Option Compare Text
+Sub LogWtRtChanges(ByRef Target As Range)
+    Dim DateS As String
+    Dim Color As String
+    Dim Profile As String
+    Dim Line As String
+    
+    ' Stops screen flickering while switching sheets
+    Application.ScreenUpdating = False
+    
+    ' Check if change in weight column
+    If Not Application.Intersect(Target, Range("S4:S32")) Is Nothing Then
+        DateS = Format(Now(), "DD-MM-YY")
+        Profile = Range("H" & Target.Row).Value
+        Color = Range("J" & Target.Row).Value
+        Line = Range("D" & Target.Row).Value
+        
+        ' Activate Wts and Rates sheet
+        Sheet7.Activate
+        Range("A" & Rows.Count).End(xlUp).Activate
+        
+        ' Populate Log Sheet with data
+        Range("A" & Selection.Row + 1).Value = DateS
+        Range("B" & Selection.Row + 1).Value = Mid(Application.UserName, 8, Len(Application.UserName))
+        Range("C" & Selection.Row + 1).Value = Line
+        Range("D" & Selection.Row + 1).Value = Color
+        Range("E" & Selection.Row + 1).Value = "'" + Profile
+        Range("F" & Selection.Row + 1).Value = Target.Text
+    End If
+    
+    Sheet1.Activate
+    
+    ' Check if change in rate column
+    If Not Application.Intersect(Target, Range("K4:K32")) Is Nothing Then
+        DateS = Format(Now(), "DD-MM-YY")
+        Profile = Range("H" & Target.Row).Value
+        Color = Range("J" & Target.Row).Value
+        Line = Range("D" & Target.Row).Value
+        
+        ' Activate Wts and Rates sheet
+        Sheet7.Activate
+        Range("A" & Rows.Count).End(xlUp).Activate
+        
+        Range("A" & Selection.Row + 1).Value = DateS
+        Range("B" & Selection.Row + 1).Value = Mid(Application.UserName, 8, Len(Application.UserName))
+        Range("C" & Selection.Row + 1).Value = Line
+        Range("D" & Selection.Row + 1).Value = Color
+        Range("E" & Selection.Row + 1).Value = "'" + Profile
+        Range("G" & Selection.Row + 1).Value = Target.Text
+        
+        Sheet1.Activate
+    End If
+End Sub
+Sub UpdateCleaningSchedule(ByRef Target As Range)
+    Dim Line As String
+    Dim contents() As String
+    Dim DateS() As String
+    Dim Profile As String
+    Dim Profile211 As String
+    Dim Profile212 As String
+    Dim lnCol As Long
+    Dim CleaningSchedule As Workbook
+    Dim lnRow As String
+    Dim pos As Integer
+    Dim Cell As Range
+    Dim objColorStop As ColorStop
+    
+    
+    ' Error handling for improper values
+    On Error Resume Next
+    Application.ScreenUpdating = False
+    
+    ' Check if change in date
+    If Not Application.Intersect(Target, Sheet1.Range("F4:F32")) Is Nothing Then
+        Target.Interior.ColorIndex = 2
+        pos = InStr(1, Range("D" & Target.Row).Value, "-")
+        Line = Mid(Range("D" & Target.Row).Value, pos + 1, Len(Range("D" & Target.Row).Value))
+        If InStr(Line, "-") <> 0 Then
+            Line = Left(Line, 2)
+        End If
+        
+        Profile = Range("H" & Target.Row).Value
+        Profile211 = Range("H29").Value
+        Profile212 = Range("H30").Value
+        contents = Split(Target.Value)
+        
+        ' Open Cleaning Schedule
+        Set CleaningSchedule = Workbooks.Open("https://associatedmaterials.sharepoint.com/sites/WestSalemProduction/Shared Documents/General/Supervisors/2023 Cleaning Schedule.xlsm")
+        
+        ' Open Correct Month in Cleaning Schedule
+        If Left(contents(0), 2) = "10" Then
+            CleaningSchedule.Sheets("Oct").Activate
+        ElseIf Left(contents(0), 2) = "11" Then
+            CleaningSchedule.Sheets("Nov").Activate
+        ElseIf Left(contents(0), 2) = "12" Then
+            CleaningSchedule.Sheets("Dec").Activate
+        ElseIf Left(contents(0), 1) = "1" Then
+            CleaningSchedule.Sheets("Jan").Activate
+        ElseIf Left(contents(0), 1) = "2" Then
+            CleaningSchedule.Sheets("Feb").Activate
+        ElseIf Left(contents(0), 1) = "3" Then
+            CleaningSchedule.Sheets("Mar").Activate
+        ElseIf Left(contents(0), 1) = "4" Then
+            CleaningSchedule.Sheets("April").Activate
+        ElseIf Left(contents(0), 1) = "5" Then
+            CleaningSchedule.Sheets("May").Activate
+        ElseIf Left(contents(0), 1) = "6" Then
+            CleaningSchedule.Sheets("June").Activate
+        ElseIf Left(contents(0), 1) = "7" Then
+            CleaningSchedule.Sheets("July").Activate
+        ElseIf Left(contents(0), 1) = "8" Then
+            CleaningSchedule.Sheets("Aug").Activate
+        ElseIf Left(contents(0), 1) = "9" Then
+            CleaningSchedule.Sheets("Sept").Activate
+        End If
+        
+        ' Find Corresponding Column and Row in Cleaning Schedule
+        DateS = Split(contents(0), "/")
+        lnCol = Cells(2, 1).EntireRow.Find(What:=DateS(1), LookIn:=xlValues, LookAt:=xlPart, SearchOrder:=xlByColumns, SearchDirection:=xlNext, MatchCase:=False).Column
+        
+        Set Cell = Range("A:A").Find(What:=Line)
+        lnRow = Cell.Row
+        Set Cell = Cells(lnRow, lnCol)
+        
+        ' Format Cleaning Schedule Based on Context
+        If Line = "21" Then
+            If contents(1) = "C/O" Then
+                Cell.Value = Profile
+                Range("B" & lnRow).Value = Profile211 + "/" + Profile212
+            Else
+                Cell.Value = contents(1)
+                Range("B" & lnRow).Value = Profile211 + "/" + Profile212
+            End If
+        Else
+            If contents(1) = "C/O" Then
+                Cell.Value = Profile
+                Range("B" & lnRow).Value = Profile
+            Else
+                Cell.Value = contents(1)
+                Range("B" & lnRow).Value = Profile
+            End If
+        End If
+        
+        ' Color cell based on shift
+        If contents(2) = "A" Then
+            Cell.Interior.ColorIndex = 6
+        ElseIf contents(2) = "B" Then
+            Cell.Interior.ColorIndex = 33
+        ElseIf contents(2) = "C" Then
+            Cell.Interior.ColorIndex = 4
+        ElseIf contents(2) = "D" Then
+            Cell.Interior.ColorIndex = 39
+        ElseIf contents(2) = "A/C" Then
+            CleaningGradient Cell, 1
+        ElseIf contents(2) = "A/D" Then
+            CleaningGradient Cell, 2
+        ElseIf contents(2) = "B/C" Then
+            CleaningGradient Cell, 3
+        ElseIf contents(2) = "B/D" Then
+            CleaningGradient Cell, 4
+        ElseIf contents(2) = "C/A" Then
+            CleaningGradient Cell, 5
+        ElseIf contents(2) = "C/B" Then
+            CleaningGradient Cell, 6
+        ElseIf contents(2) = "D/A" Then
+            CleaningGradient Cell, 7
+        ElseIf contents(2) = "D/B" Then
+            CleaningGradient Cell, 8
+        End If
+        
+    End If
+    Sheet1.Activate
+End Sub
+Sub CleaningGradient(Cell As Range, Shifts As Integer)
+    Dim A As Long
+    Dim B As Long
+    Dim C As Long
+    Dim D As Long
+    
+    A = RGB(255, 255, 0)
+    B = RGB(0, 204, 255)
+    C = RGB(0, 255, 0)
+    D = RGB(204, 153, 255)
+
+    Cell.Interior.Pattern = xlPatternLinearGradient
+    Cell.Interior.Gradient.ColorStops.Clear
+    
+    If Shifts = 1 Then
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(0)
+        objColorStop.Color = A
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(1)
+        objColorStop.Color = C
+    ElseIf Shifts = 2 Then
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(0)
+        objColorStop.Color = A
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(1)
+        objColorStop.Color = D
+    ElseIf Shifts = 3 Then
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(0)
+        objColorStop.Color = B
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(1)
+        objColorStop.Color = C
+    ElseIf Shifts = 4 Then
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(0)
+        objColorStop.Color = B
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(1)
+        objColorStop.Color = D
+    ElseIf Shifts = 5 Then
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(0)
+        objColorStop.Color = C
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(1)
+        objColorStop.Color = A
+    ElseIf Shifts = 6 Then
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(0)
+        objColorStop.Color = C
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(1)
+        objColorStop.Color = B
+    ElseIf Shifts = 7 Then
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(0)
+        objColorStop.Color = D
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(1)
+        objColorStop.Color = A
+    ElseIf Shifts = 8 Then
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(0)
+        objColorStop.Color = D
+        Set objColorStop = Cell.Interior.Gradient.ColorStops.Add(1)
+        objColorStop.Color = B
+    End If
+End Sub
+Sub AlertToChangeDate(ByRef Target As Range)
+    If Not Application.Intersect(Target, Sheet1.Range("H4:H32")) Is Nothing Then
+        Range("F" & Target.Row).Interior.ColorIndex = 6
+    End If
+End Sub
